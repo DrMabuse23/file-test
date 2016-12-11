@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <title>Ionic App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="msapplication-tap-highlight" content="no">
+  <link rel="icon" type="image/x-icon" href="assets/icon/favicon.ico">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4e8ef7">
+
+  <!-- cordova.js required for cordova apps -->
+  <script src="cordova.js"></script>
+
+  <!-- un-comment this code to enable service worker
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(() => console.log('service worker installed'))
+        .catch(err => console.log('Error', err));
+    }
+  </script>-->
+  <script>
+  document.addEventListener('deviceready', dataRead, false);
+  // create and dispatch the event
+
+  function dataRead() {
+    function readFromFile(fileName, cb) {
+      var pathToFile = cordova.file.externalRootDirectory + fileName;
+      window.resolveLocalFileSystemURL(pathToFile, function (fileEntry) {
+        fileEntry.file(function (file) {
+          var reader = new FileReader();
+
+          reader.onloadend = function (e) {
+            if (this.error) {
+              errorHandler(pathToFile, this.error);
+            }
+            cb(this.result);
+          };
+
+          reader.readAsText(file);
+        }, errorHandler.bind(null, fileName));
+      }, errorHandler.bind(null, fileName));
+    }
+
+    var errorHandler = function (fileName, e) {
+      var msg = '';
+
+      switch (e.code) {
+        case FileError.QUOTA_EXCEEDED_ERR:
+          msg = 'Storage quota exceeded';
+          break;
+        case FileError.NOT_FOUND_ERR:
+          msg = 'File not found';
+          break;
+        case FileError.SECURITY_ERR:
+          msg = 'Security error';
+          break;
+        case FileError.INVALID_MODIFICATION_ERR:
+          msg = 'Invalid modification';
+          break;
+        case FileError.INVALID_STATE_ERR:
+          msg = 'Invalid state';
+          break;
+        default:
+          msg = 'Unknown error';
+          break;
+      };
+      var event = new CustomEvent("ident", {
+          detail: {
+            error: msg
+          }
+      });
+      window.dispatchEvent(event);
+      console.log('Error (' + fileName + '): ' + msg);
+    }
+
+    var fileReady = function(fs) {
+      var fileData;
+      readFromFile('dekra/ident/mode.xyz', function (data) {
+        fileData = data;
+        console.log(data);
+        var event = new CustomEvent("ident", {
+          detail: {
+            value: data
+          }
+        });
+        window.dispatchEvent(event);
+      });
+    }
+
+    window.requestFileSystem(LocalFileSystem.PERSISTENT, 1024*12288, fileReady, errorHandler);
+  }
+  </script>
+  <link href="build/main.css" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Ionic's root component and where the app will load -->
+  <ion-app></ion-app>
+
+  <!-- The polyfills js is generated during the build process -->
+  <script src="build/polyfills.js"></script>
+
+  <!-- The bundle js is generated during the build process -->
+  <script src="build/main.js"></script>
+
+</body>
+</html>
